@@ -4,12 +4,17 @@ from core.decorators import instance
 from core.dict_object import DictObject
 from core.aochat import server_packets
 from core.logger import Logger
+from core.setting_types import TextSettingType
 import requests
 import time
 
 
 @instance()
 class PorkService:
+    # OmniCell WebEngine answers the people.anarchy-online.com paths from its own database.
+    FUNCOM_CHARACTER_INFO_URL = "http://people.anarchy-online.com/character/bio/d/{dimension}/name/{name}/bio.xml?data_type=json"
+    OMNICELL_CHARACTER_INFO_URL = "http://127.0.0.1/character/bio/d/{dimension}/name/{name}/bio.xml?data_type=json"
+
     def __init__(self):
         self.logger = Logger(__name__)
 
@@ -17,12 +22,17 @@ class PorkService:
         self.bot = registry.get_instance("bot")
         self.db = registry.get_instance("db")
         self.character_service = registry.get_instance("character_service")
+        self.setting_service = registry.get_instance("setting_service")
 
     def pre_start(self):
         self.bot.register_packet_handler(server_packets.CharacterLookup.id, self.update)
         self.bot.register_packet_handler(server_packets.CharacterName.id, self.update)
 
     def start(self):
+        self.setting_service.register("core.system", "character_info_url", self.OMNICELL_CHARACTER_INFO_URL,
+                                      TextSettingType([self.OMNICELL_CHARACTER_INFO_URL, self.FUNCOM_CHARACTER_INFO_URL]),
+                                      "URL to look up character info (OmniCell WebEngine, or people.anarchy-online.com for Funcom servers)")
+
         self.db.exec("CREATE TABLE IF NOT EXISTS player ( char_id INT PRIMARY KEY, first_name VARCHAR(30) NOT NULL, name VARCHAR(20) NOT NULL, last_name VARCHAR(30) NOT NULL, "
                      "level SMALLINT NOT NULL, breed VARCHAR(20) NOT NULL, gender VARCHAR(20) NOT NULL, faction VARCHAR(20) NOT NULL, profession VARCHAR(20) NOT NULL, "
                      "profession_title VARCHAR(50) NOT NULL, ai_rank VARCHAR(20) NOT NULL, ai_level SMALLINT, org_id INT DEFAULT NULL, org_name VARCHAR(255) NOT NULL, "
@@ -198,4 +208,4 @@ class PorkService:
         return self.db.query("SELECT DISTINCT org_name, org_id FROM player WHERE org_name <EXTENDED_LIKE=0> ?", [search], extended_like=True)
 
     def get_pork_url(self, dimension, char_name):
-        return "http://people.anarchy-online.com/character/bio/d/%d/name/%s/bio.xml?data_type=json" % (dimension, char_name)
+        return self.setting_service.get_value("character_info_url").format(dimension=dimension, name=char_name)

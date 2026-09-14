@@ -2,6 +2,7 @@
 __pycache__
 /.idea
 /conf/config.py
+/conf/login_key.json
 /data/*
 /logs/
 /modules/custom

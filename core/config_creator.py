@@ -19,8 +19,8 @@ def create_new_cfg(config_file, template_config):
         },
         "server": {
             "dimension": validate_input("Server Dimension (Enter '5' for Rubi-Ka, '6' for RK2019)", "5", formatter=int),
-            "host": validate_input("Server Host (use default for both servers)", "chat.d1.funcom.com"),
-            "port": validate_input("Server Port (enter 7105 for Rubi-Ka, and 7106 for RK2019)", 7105, formatter=int)
+            "host": validate_input("Server Host (OmniCell ChatIP; chat.d1.funcom.com for Funcom)", "127.0.0.1"),
+            "port": validate_input("Server Port (OmniCell ChatPort; 7105 Rubi-Ka or 7106 RK2019 for Funcom)", 7012, formatter=int)
         }
     }
 

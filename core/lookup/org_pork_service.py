@@ -5,6 +5,7 @@ from requests import ReadTimeout
 from core.decorators import instance
 from core.dict_object import DictObject
 from core.logger import Logger
+from core.setting_types import TextSettingType
 import requests
 import datetime
 import json
@@ -15,6 +16,11 @@ class OrgPorkService:
     CACHE_GROUP = "org_roster"
     CACHE_MAX_AGE = 86400
 
+    # OmniCell WebEngine answers the people.anarchy-online.com paths from its own database.
+    # Pointed at Funcom, an OmniCell org's roster is filled with the Funcom org that has the same id.
+    FUNCOM_ORG_ROSTER_URL = "http://people.anarchy-online.com/org/stats/d/{dimension}/name/{org_id}/basicstats.xml?data_type=json"
+    OMNICELL_ORG_ROSTER_URL = "http://127.0.0.1/org/stats/d/{dimension}/name/{org_id}/basicstats.xml?data_type=json"
+
     def __init__(self):
         self.logger = Logger(__name__)
 
@@ -24,6 +30,12 @@ class OrgPorkService:
         self.character_service = registry.get_instance("character_service")
         self.pork_service = registry.get_instance("pork_service")
         self.cache_service = registry.get_instance("cache_service")
+        self.setting_service = registry.get_instance("setting_service")
+
+    def start(self):
+        self.setting_service.register("core.system", "org_roster_url", self.OMNICELL_ORG_ROSTER_URL,
+                                      TextSettingType([self.OMNICELL_ORG_ROSTER_URL, self.FUNCOM_ORG_ROSTER_URL]),
+                                      "URL to look up an org roster (OmniCell WebEngine, or people.anarchy-online.com for Funcom servers)")
 
     def get_org_info(self, org_id, max_cache_age=None):
         cache_key = "%d.%d.json" % (org_id, self.bot.dimension)
@@ -162,4 +174,4 @@ class OrgPorkService:
                                "last_updated": int(datetime.datetime.strptime(last_updated, "%Y/%m/%d %H:%M:%S").timestamp())})
 
     def get_pork_url(self, dimension, org_id):
-        return "http://people.anarchy-online.com/org/stats/d/%d/name/%d/basicstats.xml?data_type=json" % (dimension, org_id)
+        return self.setting_service.get_value("org_roster_url").format(dimension=dimension, org_id=org_id)
