@@ -378,3 +378,20 @@ def run_upgrades():
         if table_exists("setting"):
             db.exec("UPDATE setting SET value = 'https://history.aobots.org/?server={dimension}&name={name}' WHERE name = 'pork_history_url'")
         version = update_version(version)
+
+    if version == 37:
+        # OmniCell: live-server lookups go to the OmniCell WebEngine. Only settings still at the
+        # Funcom/community default are changed, so an address someone set by hand is kept.
+        # auto_scout_enable is stored as 1/0 and cannot tell a default from a choice; it is turned off
+        # because its tower events are Funcom's live tower sites.
+        if table_exists("setting"):
+            for name, old_value, new_value in [
+                ("pork_history_url", "https://history.aobots.org/?server={dimension}&name={name}", "http://127.0.0.1/history?server={dimension}&name={name}"),
+                ("boss_timers_api_address", "https://timers.aobots.org/api/v1.1/bosses", "http://127.0.0.1/timers/bosses"),
+                ("gauntlet_timers_api_address", "https://timers.aobots.org/api/v1.1/gaubuffs", "http://127.0.0.1/timers/gaubuffs"),
+                ("gmi_api_url", "https://gmi.us.nadybot.org/v1.0/aoid/{item_id}", "http://127.0.0.1/gmi/aoid/{item_id}"),
+                ("gmi_api_url", "https://gmi.eu.nadybot.org/v1.0/aoid/{item_id}", "http://127.0.0.1/gmi/aoid/{item_id}"),
+            ]:
+                db.exec("UPDATE setting SET value = ? WHERE name = ? AND value = ?", [new_value, name, old_value])
+            db.exec("UPDATE setting SET value = '0' WHERE name = 'auto_scout_enable'")
+        version = update_version(version)

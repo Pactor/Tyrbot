@@ -154,11 +154,9 @@ class OrgListController:
             else:
                 org_ranks[org_member.org_rank_name].offline_members.append(org_member)
 
-        blob = "[%s] [%s] [%s]" % (
-            self.text.make_chatcmd("HTML", f"/start http://people.anarchy-online.com/org/stats/d/5/name/{self.orglist.org_info.org_id}/"),
-            self.text.make_chatcmd("XML", f"/start http://people.anarchy-online.com/org/stats/d/5/name/{self.orglist.org_info.org_id}/basicstats.xml"),
-            self.text.make_chatcmd("JSON", f"/start http://people.anarchy-online.com/org/stats/d/5/name/{self.orglist.org_info.org_id}/basicstats.xml?data_type=json")
-        )
+        # The roster as the bot looked it up: org_roster_url, on this bot's dimension.
+        blob = "[%s]" % self.text.make_chatcmd(
+            "JSON", "/start " + self.org_pork_service.get_pork_url(self.bot.dimension, self.orglist.org_info.org_id))
 
         if self.orglist.offline_member_display_threshold == self.DEFAULT_OFFLINE_MEMBER_DISPLAY_THRESHOLD:
             blob += "  " + self.text.make_tellcmd("Show all offline members", f"orglist {self.orglist.org_info.org_id} --show_all_offline")

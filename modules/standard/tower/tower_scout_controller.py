@@ -5,7 +5,7 @@ from core.command_param_types import Options, Any, Int
 from core.decorators import instance, event, command
 from core.logger import Logger
 from modules.core.org_members.org_member_controller import OrgMemberController
-from core.setting_types import BooleanSettingType
+from core.setting_types import BooleanSettingType, TextSettingType
 from modules.standard.helpbot.playfield_controller import PlayfieldController
 from modules.standard.tower.tower_messages_controller import TowerMessagesController
 
@@ -24,10 +24,22 @@ class TowerScoutController:
         self.playfield_controller: PlayfieldController = registry.get_instance("playfield_controller")
         self.highway_websocket_controller = registry.get_instance("highway_websocket_controller")
 
+    # OmniCell WebEngine tracks no tower sites and answers with an empty list;
+    # towers.aobots.org answers for Funcom's live servers.
+    OMNICELL_TOWER_SITES_URL = "http://127.0.0.1/towers/sites"
+    AOBOTS_TOWER_SITES_URL = "https://towers.aobots.org/api/sites"
+
     def start(self):
         self.db.load_sql_file(self.module_dir + "/" + "scout_info.sql")
 
-        self.setting_service.register(self.module_name, "auto_scout_enable", True, BooleanSettingType(), "Enable Auto Scout")
+        self.setting_service.register(self.module_name, "tower_sites_api_url", self.OMNICELL_TOWER_SITES_URL,
+                                      TextSettingType([self.OMNICELL_TOWER_SITES_URL, self.AOBOTS_TOWER_SITES_URL]),
+                                      "URL for the tower sites API (OmniCell WebEngine, or towers.aobots.org for Funcom servers)")
+
+        # Off by default: auto scout fills scout_info from the websocket relay's tower_events room,
+        # which carries Funcom's live tower sites, not an OmniCell server's.
+        self.setting_service.register(self.module_name, "auto_scout_enable", False, BooleanSettingType(),
+                                      "Enable Auto Scout (tower events from the websocket relay; Funcom servers only)")
         self.setting_service.register_change_listener("auto_scout_enable", self.auto_scout_update)
 
         self.auto_scout_update("auto_scout_enable", None, self.setting_service.get("auto_scout_enable").get_value())
@@ -90,7 +102,7 @@ class TowerScoutController:
     
         if obj.type == "room-info":
             headers = {"User-Agent": f"Tyrbot {self.bot.version}"}
-            r = requests.get("https://towers.aobots.org/api/sites", headers=headers, timeout=5)
+            r = requests.get(self.setting_service.get_value("tower_sites_api_url"), headers=headers, timeout=5)
             result = r.json()
 
             # update all sites from API when first connected to websocket server

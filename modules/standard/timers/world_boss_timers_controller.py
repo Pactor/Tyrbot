@@ -37,14 +37,21 @@ class WorldBossTimersController:
         self.text = registry.get_instance("text")
         self.util = registry.get_instance("util")
 
-    def start(self):
-        self.setting_service.register(self.module_name, "boss_timers_api_address", "https://timers.aobots.org/api/v1.1/bosses",
-                                      TextSettingType(["https://timers.aobots.org/api/v1.1/bosses"]),
-                                      "The address of the Boss Timers API")
+    # OmniCell WebEngine tracks no boss or Gauntlet timers and answers with empty lists;
+    # timers.aobots.org answers for Funcom's live servers.
+    OMNICELL_BOSS_TIMERS_URL = "http://127.0.0.1/timers/bosses"
+    OMNICELL_GAUNTLET_TIMERS_URL = "http://127.0.0.1/timers/gaubuffs"
+    AOBOTS_BOSS_TIMERS_URL = "https://timers.aobots.org/api/v1.1/bosses"
+    AOBOTS_GAUNTLET_TIMERS_URL = "https://timers.aobots.org/api/v1.1/gaubuffs"
 
-        self.setting_service.register(self.module_name, "gauntlet_timers_api_address", "https://timers.aobots.org/api/v1.1/gaubuffs",
-                                      TextSettingType(["https://timers.aobots.org/api/v1.1/gaubuffs"]),
-                                      "The address of the Gauntlet Buff Timers API")
+    def start(self):
+        self.setting_service.register(self.module_name, "boss_timers_api_address", self.OMNICELL_BOSS_TIMERS_URL,
+                                      TextSettingType([self.OMNICELL_BOSS_TIMERS_URL, self.AOBOTS_BOSS_TIMERS_URL]),
+                                      "The address of the Boss Timers API (OmniCell WebEngine, or timers.aobots.org for Funcom servers)")
+
+        self.setting_service.register(self.module_name, "gauntlet_timers_api_address", self.OMNICELL_GAUNTLET_TIMERS_URL,
+                                      TextSettingType([self.OMNICELL_GAUNTLET_TIMERS_URL, self.AOBOTS_GAUNTLET_TIMERS_URL]),
+                                      "The address of the Gauntlet Buff Timers API (OmniCell WebEngine, or timers.aobots.org for Funcom servers)")
 
         self.command_alias_service.add_alias("tara", "worldboss")
         self.command_alias_service.add_alias("loren", "worldboss")

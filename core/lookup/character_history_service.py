@@ -24,10 +24,15 @@ class CharacterHistoryService:
         self.cache_service = registry.get_instance("cache_service")
         self.setting_service = registry.get_instance("setting_service")
 
+    # OmniCell WebEngine keeps no character history and answers with an empty list;
+    # history.aobots.org answers for Funcom's live servers.
+    OMNICELL_HISTORY_URL = "http://127.0.0.1/history?server={dimension}&name={name}"
+    AOBOTS_HISTORY_URL = "https://history.aobots.org/?server={dimension}&name={name}"
+
     def start(self):
-        self.setting_service.register("core.system", "pork_history_url", "https://history.aobots.org/?server={dimension}&name={name}",
-                                      TextSettingType(["https://history.aobots.org/?name={name}&server={dimension}"]),
-                                      "URL to lookup character history")
+        self.setting_service.register("core.system", "pork_history_url", self.OMNICELL_HISTORY_URL,
+                                      TextSettingType([self.OMNICELL_HISTORY_URL, self.AOBOTS_HISTORY_URL]),
+                                      "URL to lookup character history (OmniCell WebEngine, or history.aobots.org for Funcom servers)")
 
     def get_character_history(self, name, server_num):
         cache_key = "%s.%d.json" % (name, server_num)

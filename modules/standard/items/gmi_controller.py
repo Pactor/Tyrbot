@@ -20,10 +20,14 @@ class GMIController:
         self.setting_service = registry.get_instance("setting_service")
         self.items_controller = registry.get_instance("items_controller")
 
+    # OmniCell WebEngine has no market and answers with no orders;
+    # gmi.nadybot.org answers for Funcom's live servers.
+    OMNICELL_GMI_URL = "http://127.0.0.1/gmi/aoid/{item_id}"
+
     def start(self):
-        self.setting_service.register(self.module_name, "gmi_api_url", "https://gmi.us.nadybot.org/v1.0/aoid/{item_id}",
-                                      TextSettingType(["https://gmi.us.nadybot.org/v1.0/aoid/{item_id}", "https://gmi.eu.nadybot.org/v1.0/aoid/{item_id}"]),
-                                      "URL for the GMI API")
+        self.setting_service.register(self.module_name, "gmi_api_url", self.OMNICELL_GMI_URL,
+                                      TextSettingType([self.OMNICELL_GMI_URL, "https://gmi.us.nadybot.org/v1.0/aoid/{item_id}", "https://gmi.eu.nadybot.org/v1.0/aoid/{item_id}"]),
+                                      "URL for the GMI API (OmniCell WebEngine, or gmi.nadybot.org for Funcom servers)")
 
     @command(command="gmi", params=[Int("item_id")], access_level="guest",
              description="Search for GMI listings by item id",
